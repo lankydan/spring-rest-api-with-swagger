@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
@@ -56,7 +58,6 @@ public class PersonController {
             @ApiResponse(description = "Internal error", responseCode = "500", content = @Content)
         }
     )
-    // Can use @ResponseStatus to have an enum version of the response code?
     public ResponseEntity<Iterable<Person>> all() {
         return ResponseEntity.ok(personRepository.findAll());
     }
@@ -86,23 +87,6 @@ public class PersonController {
             .orElseThrow(() -> new NoSuchElementException("Person with id: " + id + " does not exist"));
     }
 
-    //    @PostMapping
-//    @Operation(
-//        summary = "Adds a new person",
-//        description = "Adds a new person by passing in a JSON representation of the person.",
-//        tags = { "People" }
-//    )
-//    @ApiResponses({
-//        @ApiResponse(
-//            description = "Created",
-//            responseCode = "201",
-//            links = @Link(name = "get", operationId = "get", parameters = @LinkParameter(name = "id")),
-//            content = @Content(mediaType = "application/json", schema = @Schema(implementation = Person.class))
-//        ),
-//        @ApiResponse(description = "Internal error", responseCode = "500", content = @Content)
-//    })
-    // Seems that @ApiResponses doesn't work when trying to create the response links
-    // however there is a `responses` property on the `@Operation` annotation
     @PostMapping
     @Operation(
         summary = "Adds a new person",
@@ -122,14 +106,14 @@ public class PersonController {
         Person saved = personRepository.save(
             new Person(
                 UUID.randomUUID(),
-                person.firstName(),
-                person.lastName()
+                person.getFirstName(),
+                person.getLastName()
             )
         );
         URI uri =
             MvcUriComponentsBuilder.fromController(getClass())
                 .path("/{id}")
-                .buildAndExpand(saved.id())
+                .buildAndExpand(saved.getId())
                 .toUri();
         return ResponseEntity.created(uri).body(saved);
     }
@@ -157,7 +141,7 @@ public class PersonController {
         if (!personRepository.existsById(id)) {
             return ResponseEntity.notFound().build();
         } else {
-            Person saved = personRepository.save(new Person(id, person.firstName(), person.lastName()));
+            Person saved = personRepository.save(new Person(id, person.getFirstName(), person.getLastName()));
             return ResponseEntity.ok(saved);
         }
     }
